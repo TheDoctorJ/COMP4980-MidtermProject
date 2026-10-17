@@ -463,8 +463,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f8eeb6d4bebaa94c97d9ce853dc0aa3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DiamondSquare
-  frequency: 1
-  scale: 0.3
+  jitter: 0
+  seaLevel: 0.44
+  radius: 1
+  extremaScale: 0.25
+  frequency1: 1.5
+  frequency2: 1
+  frequency3: 32
+  frequency4: 0
+  frequency5: 0
+  frequency6: 0.25
+  amplitude1: 10
+  amplitude2: 0.6
+  amplitude3: 0.3
+  amplitude4: 0.0625
+  amplitude5: 0.03125
+  amplitude6: 10
+  vertexStartCount: 64000
 --- !u!4 &1388708251
 Transform:
   m_ObjectHideFlags: 0
@@ -513,7 +528,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 15303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 5298aeffc685188469e0d10607936048, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
