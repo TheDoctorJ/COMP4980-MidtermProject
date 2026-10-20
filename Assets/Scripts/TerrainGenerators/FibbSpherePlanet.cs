@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using andywiecko.BurstTriangulator;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Mathematics.Geometry;
 using UnityEngine;
+using UnityEngine.LightTransport;
 using static andywiecko.BurstTriangulator.Utilities;
 
 
@@ -14,6 +16,7 @@ using static andywiecko.BurstTriangulator.Utilities;
  * Then it uses perlin noise to generate some realistic terrain on the sphere.
  * 
  * TODO: I want to tile the sphere, but am confused about the centroid calculation aspect. Will add later.
+ * TODO: Also want to add LOD. That's very hard.
  * 
  * 
  */
@@ -24,33 +27,61 @@ public class FibbSpherePlanet : MonoBehaviour
     List<Color> colours = new List<Color>();
     int[] triangles;
     MeshFilter mf;
+    // Stores the generated noise values, I'm thinking of seeing if I can reuse it to mix ridged generation in.
+    float[] simplexValues;
     int poleIndex;
+    [Header("Generation parameters.")]
+    // unused right now, but typically would space out your points from the FibbSphere. Unsure how it affects terrain and triangularization.
     [SerializeField] float jitter = 0;
     // Sea Level
     [SerializeField] float seaLevel;
+    float approximateSeaRadius = 0;
+    float seaNoiseNumber = 0;
     // Planet radius in world units, also used in pnoise.
     [SerializeField] float radius = 1.0f;
     // This is the scale of how high the mountains can go, it shouldn't go very high
     // (especially over 1), as it makes the peaks and valleys to eccentric. This is relative to the radius.
     // higher numba -> more cartoony mountains and valleys.
     [SerializeField] float extremaScale = 0.1f;
-    // perlin noise frequency and amplitude
-    [Header("Perlin Noise Stuff")]
-    [SerializeField] float frequency1 = 1.0f;
-    [SerializeField] float frequency2 = 1.0f;
-    [SerializeField] float frequency3 = 1.0f;
-    [SerializeField] float frequency4 = 1.0f;
-    [SerializeField] float frequency5 = 1.0f;
-    [SerializeField] float frequency6 = 1.0f;
-    [SerializeField] float amplitude1 = 0.1f;
-    [SerializeField] float amplitude2 = 0.1f;
-    [SerializeField] float amplitude3 = 0.1f;
-    [SerializeField] float amplitude4 = 0.1f;
-    [SerializeField] float amplitude5 = 0.1f;
-    [SerializeField] float amplitude6 = 0.1f;
+    [Header("Colours!")]
+    [SerializeField] Gradient terrainGradient;
+    [SerializeField] Color deepWater = Color.darkBlue;
+    [SerializeField] Color otherWater = Color.darkBlue;
 
-    List<float> frequencyList = new List<float>();
-    List<float> amplitudeList = new List<float>();
+
+    [Header("Continental Frequencies")]
+    [SerializeField]
+    List<float> continentFrequencyList = new List<float>()
+    {
+        1f,2f,4f,8f,16f,32f
+    };
+    [Header("Continental Amplitudes")]
+    [SerializeField]
+    List<float> continentAmplitudeList = new List<float>()
+    {
+        1f, .5f, .25f, .125f, .0625f, .03125f
+    };
+
+    [Header("Mountain Parameters")]
+    // Mountain needs its own parameter for how much it affects height. What's happening rn is that its absolutely spiking straight up.
+    // TODO: Decide if just leave out mountains, I'm not sure how to get it somewhat smooth along the coasts anyways.
+    [SerializeField] float mountainStrength = .5f;
+    float mountainNoiseNumber = 0;
+    [Header("Mountain Noise Frequencies")]
+    [SerializeField]
+    List<float> mountainFrequencyList = new List<float>()
+    {
+        1f,2f,4f,8f,16f,32f
+    };
+    [Header("Mountain Noise Amplitudes")]
+    [SerializeField]
+    List<float> mountainAmplitudeList = new List<float>()
+    {
+        1f, .5f, .25f, .125f, .0625f, .03125f
+    };
+
+
+    
 
     // How many verticies should we use?
     [SerializeField] int vertexStartCount = 8000;
@@ -60,19 +91,6 @@ public class FibbSpherePlanet : MonoBehaviour
     {
         Debug.Log("FibbSpherePlanet script has started.");
         Debug.Log(gameObject.name);
-        // Collect the coeffs into an easy to manipulate list.
-        frequencyList.Add(frequency1);
-        frequencyList.Add(frequency2);
-        frequencyList.Add(frequency3);
-        frequencyList.Add(frequency4);
-        frequencyList.Add(frequency5);
-        frequencyList.Add(frequency6);
-        amplitudeList.Add(amplitude1);
-        amplitudeList.Add(amplitude2);
-        amplitudeList.Add(amplitude3);
-        amplitudeList.Add(amplitude4);
-        amplitudeList.Add(amplitude5);
-        amplitudeList.Add(amplitude6);
 
         // Mesh (filter) that the GO is attached to.
         mf = GetComponent<MeshFilter>();
@@ -137,7 +155,8 @@ public class FibbSpherePlanet : MonoBehaviour
 
         Debug.Log("Number of halfedges in total: " + string.Join(", ", halfEdges.Length));
 
-        ApplyPerlinNoise();
+        ApplySimplexNoise();
+        //ApplyRidgedSimplexNoise();
 
         mf.mesh.SetVertices(points);
         mf.mesh.SetTriangles(trangles, 0);
@@ -148,7 +167,10 @@ public class FibbSpherePlanet : MonoBehaviour
         mf.mesh.RecalculateNormals();
     }
 
-    private void ApplyPerlinNoise()
+    /**
+     * Used for mountains
+     */
+    private void ApplyRidgedSimplexNoise()
     {
         // We could add perlin noise in 2d and stereo project back to 3d, but I think just iterating through again is fine
         // check out this: https://www.redblobgames.com/maps/terrain-from-noise/
@@ -157,41 +179,148 @@ public class FibbSpherePlanet : MonoBehaviour
             // so we're gonna do the layers that redblob does, and see how that works out.
             // Layering works simply, apply perlin (cnoise) with a couple different
             float3 pf = points[i];
+            // trying this out, seeing as this is mountain stuff, if our point is at the waterline we skip. Also thinking maybe
+            // we should just be checking the spots where we're close to peaks in general? That way we'd leave out everything except big mountains.
+            if (simplexValues[i] <= mountainNoiseNumber)
+            {
+                continue;
+            }
 
 
-            float pnoise = 0;
+            // Updated method: Problem with the exponential method I was doing is that it was really sensitive
+            // and generating domes. This makes ridges instead!
+            float eSum = 0;
             float ampSum = 0;
 
-            for(int j = 0; j < frequencyList.Count; j++)
+
+            for (int j = 0; j < mountainFrequencyList.Count; j++)
             {
-                pnoise += amplitudeList[j] * noise.cnoise(pf * frequencyList[j]);
-                ampSum += amplitudeList[j];
+                if (j == 0)
+                {
+                    float e = mountainAmplitudeList[j] * RidgeNoise(math.normalize(pf) * mountainFrequencyList[j]);
+                    eSum += (e);
+
+                }
+                else {
+                    float e = mountainAmplitudeList[j] * RidgeNoise(math.normalize(pf) * mountainFrequencyList[j]) * eSum;
+                    eSum += e;
+                }
+                ampSum += mountainAmplitudeList[j];
             }
-            pnoise /= ampSum;
+            eSum = eSum / ampSum;
+            eSum = math.pow(eSum * 1.2f, 4);
             // redblob uses a fudge factor and exponent to push pull valleys.
             // New issue: cnoise gives a [-1,1]. This is not good for powers. If we add 1 we just get [0,2].
             // so instead we do add 1 divide by 2. [-1,1] -> [0,2] -> [0,1]
-            pnoise = math.saturate((pnoise + 1) * 0.5f);
-            pnoise = math.pow(pnoise*1.2f, 1.9f);
+            // pnoise = math.saturate((pnoise + 1) * 0.5f);
 
-            float height = math.max(pnoise, seaLevel);
-            height = 1f + height * extremaScale;
-            // if height (which is more like a vertical scale factor) is below .6 (i'll serialize later) it's gonna count as water, and we just keep it at .6
-            points[i] = math.normalize(pf) * (radius * height);
 
-            // finally, add some colour (just simple for now).
-            SimpleVertexColour(i, pnoise);
+            // rearranging this was a pain. esum * mountainStrength -> apply how much the mountain noise affects this ridged generated noise, + simplexValue[i] -> the original noise value generated).
+            // 1f -> we're always applying as a scale factor, therefore need to start at 1, extremaScale -> Still just smooshing everything.
+            float height = 1f + ( eSum* mountainStrength + simplexValues[i]) * extremaScale;
+            Vector3 p =  math.normalize(pf) * height*radius;
+            points[i] = p;
+            colours[i]=SimpleVertexColour(eSum + simplexValues[i]);
 
 
         }
     }
 
-    private void SimpleVertexColour(int i, float pnoise)
+    /**
+     * Used for the continents
+     */
+    private void ApplySimplexNoise()
     {
-        if (pnoise <= seaLevel) colours.Add(Color.darkBlue);
-        // magic number in process of figuring out what height looks good for snow.
-        else if(pnoise >= 0.8) colours.Add(Color.snow);
-        else colours.Add(Color.forestGreen);
+
+        // So new issue with sea level. turns out that because simplex/perlin isn't a normal distribution, I have to calculate at what radius see level starts.
+        // I can't just use a simple assumption over the values.
+        simplexValues = new float[points.Count];
+        for (int i = 0; i < points.Count; i++)
+        {
+            float3 pf = points[i];
+
+
+            float pnoise = 0;
+            float ampSum = 0;
+
+            for (int j = 0; j < continentFrequencyList.Count; j++)
+            {
+                pnoise += continentAmplitudeList[j] * noise.snoise(continentFrequencyList[j]*pf);
+                ampSum += continentAmplitudeList[j];
+            }
+            pnoise /= ampSum;
+            pnoise = math.saturate((pnoise + 1) * 0.5f);
+            simplexValues[i] = pnoise;
+
+            }
+        // Now we can calculate what simplex value is below the sea. absolutely horribly on memory and time complexity. but I can't think of another
+        // way to do it. TODO: maybe shaders can calculate it? Look into shader graph.
+        float[] sortedSimps = new float[simplexValues.Length];
+        Array.Copy(simplexValues, 0, sortedSimps, 0, simplexValues.Length);
+        Array.Sort(sortedSimps);
+        seaNoiseNumber = sortedSimps[(int)(sortedSimps.Length * seaLevel) - 1];
+        // trying one for mountains too
+        mountainNoiseNumber = sortedSimps[(int)(sortedSimps.Length * .9) - 1];
+        approximateSeaRadius = radius * (1 + extremaScale * seaNoiseNumber);
+
+        // then we colour in the points
+        for (int i = 0; i < simplexValues.Length; i++)
+        {
+            float sp = simplexValues[i];
+            // this'll scooch up the ocean floor/all the sub ocean numbers.
+            float height = math.max(sp, seaNoiseNumber);
+            // then switch to the height scale
+            height = 1f + extremaScale * height;
+            points[i] = points[i].normalized * radius * height;
+            colours.Add(SimpleVertexColour(sp));
+        }
+    }
+
+ 
+
+    /**
+     * Just a simple way of adding 'water.' My thought is if we create another sphere (just a primitive)
+     * with a radius that's (waterlevel)*(radius of planet) we can cover the planet in an overlapped level.
+     * 
+     */
+    private void AddWaterSphere()
+    {
+        throw new NotImplementedException();
+    }
+
+    private float RidgeNoise(float3 point)
+    {
+        float r = math.saturate((noise.snoise(point) + 1) * 0.5f);
+        return (float)(2 * (0.5-math.abs(0.5-r)));
+    }
+
+
+    /**
+     * Updated to try and use a gradient. Apparently it's as simple as defining the gradient in the editor (in this case because it's a field).
+     * Then calling evaulate in that spot. I have to evaluate based [0,1]   
+     * https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Gradient.html
+     * 
+     * @param pnoise the generated pnoise value.
+     */
+    private Color SimpleVertexColour(float noise)
+    {   
+
+        if (noise <= seaNoiseNumber / 1.8) return deepWater;
+        if (noise <= seaNoiseNumber) return otherWater;
+
+        float bounded = math.unlerp(0, 1, noise);
+        return terrainGradient.Evaluate(bounded);
+
+        //// magic number in process of figuring out what height looks good for snow.
+        //else if (noise < seaNoiseNumber + .02) return Color.sandyBrown;
+        //else if (noise < seaNoiseNumber + .05) return Color.paleGoldenRod;
+        //else if (noise < seaNoiseNumber + .253) return Color.darkGreen;
+        //else if (noise < seaNoiseNumber * .76) return Color.dimGray;
+        //else return Color.snow;
+
+
+        
+
     }
 
     /**
@@ -275,7 +404,7 @@ public class FibbSpherePlanet : MonoBehaviour
 
             double theta = phi * i;
 
-            double x = math.cos(theta) * radius;
+            double x = math.cos(theta) * radius;    
             double z = math.sin(theta) * radius;
 
 

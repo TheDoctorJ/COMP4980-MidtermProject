@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 2d056ac30ecc9e542b26e06133f23602, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -462,24 +462,73 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f8eeb6d4bebaa94c97d9ce853dc0aa3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DiamondSquare
+  m_EditorClassIdentifier: Assembly-CSharp::FibbSpherePlanet
   jitter: 0
-  seaLevel: 0.44
-  radius: 1
-  extremaScale: 0.25
-  frequency1: 1.5
-  frequency2: 1
-  frequency3: 32
-  frequency4: 0
-  frequency5: 0
-  frequency6: 0.25
-  amplitude1: 10
-  amplitude2: 0.6
-  amplitude3: 0.3
-  amplitude4: 0.0625
-  amplitude5: 0.03125
-  amplitude6: 10
-  vertexStartCount: 64000
+  seaLevel: 0.3
+  radius: 10
+  extremaScale: 0.1
+  terrainGradient:
+    serializedVersion: 2
+    key0: {r: 0.9411765, g: 0.9019608, b: 0.5490196, a: 1}
+    key1: {r: 0.7215686, g: 0.5254902, b: 0.04313726, a: 1}
+    key2: {r: 0, g: 0.3921569, b: 0, a: 0}
+    key3: {r: 0, g: 0.2240534, b: 0, a: 0}
+    key4: {r: 0, g: 0.21568628, b: 0, a: 0}
+    key5: {r: 0.42352942, g: 0.49173677, b: 0.54453784, a: 0}
+    key6: {r: 0.4392157, g: 0.5019608, b: 0.5647059, a: 0}
+    key7: {r: 1, g: 0.9803922, b: 0.9803922, a: 0}
+    ctime0: 1542
+    ctime1: 10923
+    ctime2: 17348
+    ctime3: 35723
+    ctime4: 42148
+    ctime5: 52685
+    ctime6: 57054
+    ctime7: 62580
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: 0
+    m_NumColorKeys: 8
+    m_NumAlphaKeys: 2
+  deepWater: {r: 0, g: 0, b: 0.25490198, a: 1}
+  otherWater: {r: 0, g: 0, b: 0.5764706, a: 1}
+  continentFrequencyList:
+  - 1
+  - 2
+  - 4
+  - 8
+  - 16
+  - 32
+  continentAmplitudeList:
+  - 1
+  - 0.5
+  - 0.25
+  - 0.125
+  - 0.0625
+  - 0.03125
+  mountainStrength: 0.05
+  mountainFrequencyList:
+  - 1
+  - 2
+  - 4
+  - 8
+  - 16
+  - 32
+  mountainAmplitudeList:
+  - 1
+  - 0.5
+  - 0.25
+  - 0.125
+  - 0.0625
+  - 0.03125
+  vertexStartCount: 3000
 --- !u!4 &1388708251
 Transform:
   m_ObjectHideFlags: 0
