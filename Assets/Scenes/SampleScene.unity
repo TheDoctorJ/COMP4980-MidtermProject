@@ -206,7 +206,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: -2.94}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -347,13 +347,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: -4.194, y: -0.21, z: -2.749}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!114 &410087042
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -464,25 +464,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FibbSpherePlanet
   jitter: 0
-  seaLevel: 0.3
-  radius: 10
-  extremaScale: 0.1
+  seaLevel: 0.65
+  radius: 1
+  extremaScale: 1
   terrainGradient:
     serializedVersion: 2
     key0: {r: 0.9411765, g: 0.9019608, b: 0.5490196, a: 1}
     key1: {r: 0.7215686, g: 0.5254902, b: 0.04313726, a: 1}
-    key2: {r: 0, g: 0.3921569, b: 0, a: 0}
-    key3: {r: 0, g: 0.2240534, b: 0, a: 0}
-    key4: {r: 0, g: 0.21568628, b: 0, a: 0}
-    key5: {r: 0.42352942, g: 0.49173677, b: 0.54453784, a: 0}
+    key2: {r: 0.9333334, g: 0.8666667, b: 0.509804, a: 0}
+    key3: {r: 0, g: 0.3921569, b: 0, a: 0}
+    key4: {r: 0, g: 0.2240534, b: 0, a: 0}
+    key5: {r: 0, g: 0.21568628, b: 0, a: 0}
     key6: {r: 0.4392157, g: 0.5019608, b: 0.5647059, a: 0}
     key7: {r: 1, g: 0.9803922, b: 0.9803922, a: 0}
     ctime0: 1542
-    ctime1: 10923
-    ctime2: 17348
-    ctime3: 35723
-    ctime4: 42148
-    ctime5: 52685
+    ctime1: 21331
+    ctime2: 33667
+    ctime3: 37779
+    ctime4: 45875
+    ctime5: 52942
     ctime6: 57054
     ctime7: 62580
     atime0: 0
@@ -528,7 +528,7 @@ MonoBehaviour:
   - 0.125
   - 0.0625
   - 0.03125
-  vertexStartCount: 3000
+  vertexStartCount: 64000
 --- !u!4 &1388708251
 Transform:
   m_ObjectHideFlags: 0
@@ -538,7 +538,7 @@ Transform:
   m_GameObject: {fileID: 1388708249}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.93628, y: -0.13015, z: -1.20795}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

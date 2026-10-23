@@ -6,7 +6,6 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Mathematics.Geometry;
 using UnityEngine;
-using UnityEngine.LightTransport;
 using static andywiecko.BurstTriangulator.Utilities;
 
 
@@ -156,7 +155,7 @@ public class FibbSpherePlanet : MonoBehaviour
         Debug.Log("Number of halfedges in total: " + string.Join(", ", halfEdges.Length));
 
         ApplySimplexNoise();
-        //ApplyRidgedSimplexNoise();
+        ApplyRidgedSimplexNoise();
 
         mf.mesh.SetVertices(points);
         mf.mesh.SetTriangles(trangles, 0);
@@ -276,6 +275,21 @@ public class FibbSpherePlanet : MonoBehaviour
         }
     }
 
+    /**
+     * So the idea is that we first have to find the vertices that are visible, those will be the ones that get subdivided.
+     *   i) If we take the plane that the camera can get a normal off the plane. 
+     *  ii) Take the dot with a vertex x: 
+     *          a) dot(x) >= 0 -> opposite direction camera is pointing (or on the horizon) i.e. 'visible face of planet.'
+                b) dot(x) <  0 -> same direction camera is pointing i.e. 'opposing face of planet.'
+     * iii) If we know the distance from the camera to the surface of planet (I'll start just by using |cam.pos|-radius)
+     *      we can calculate how many of the vertices are in frame. So for each of vert x from previous step:
+     *          a) 
+     */
+    public void GetVisibleVertices()
+    {
+        
+    }
+
  
 
     /**
@@ -381,7 +395,7 @@ public class FibbSpherePlanet : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        gameObject.transform.Rotate(Vector3.back, 3 * Time.deltaTime);
     }
 
     // https://www.redblobgames.com/x/1842-delaunay-voronoi-sphere/
